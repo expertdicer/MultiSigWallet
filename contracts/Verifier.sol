@@ -22,6 +22,18 @@ contract Verifier {
         return keccak256(data);
     }
 
+    function getMessageHash(bytes8[] memory chainID, 
+        address[] memory add) public view returns (bytes32) {
+        
+        bytes memory data;
+        for (uint i = 0; i < chainID.length; i++) {
+            data = abi.encodePacked(data, abi.encodePacked(chainID[i], add[i]));
+        }
+
+        return keccak256(data);
+
+    }
+
     function testAbi(
         bytes8 chainID,
         bytes memory pubk
@@ -75,4 +87,6 @@ contract Verifier {
 
         // implicitly return (r, s, v)
     }
+
+
 }

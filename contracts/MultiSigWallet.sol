@@ -34,6 +34,7 @@ contract MultiSigWallet {
     address public moderator;
     uint public required;
     uint public transactionCount;
+    bool public isActive;
 
     struct Transaction {
         address destination;                // địa chỉ contract sẽ đc gọi
@@ -122,6 +123,7 @@ contract MultiSigWallet {
         moderator = msg.sender;
         owners = _owners;
         required = _required;
+        isActive = true;
     }
 
     /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
@@ -142,7 +144,6 @@ contract MultiSigWallet {
         onlyWallet
         ownerExists(owner)
     {
-
     }
 
     /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
@@ -360,5 +361,40 @@ contract MultiSigWallet {
         _transactionIds = new uint[](to - from);
         for (i=from; i<to; i++)
             _transactionIds[i - from] = transactionIdsTemp[i];
+    }
+
+    // disable multi sig wallet
+    function disableMultiSigWallet() public {
+        isActive = false;
+    }
+
+    // check multiSigWallet enabled
+    function isMultiSigWalletEnabled() public returns (bool) {
+        return isActive;
+    }
+
+    // add address
+    function addAddress(address owner)
+        public
+        ownerDoesNotExist(owner)
+        notNull(owner)
+        validRequirement(owners.length + 1, required)
+    {
+        owners.push(owner);
+        isOwner[owner] = true;
+    }
+
+    // remove address
+    function removeAddess(address owner)
+        public
+    {
+        for (uint i = 0; i < owners.length; i++) {
+            if (owner == owners[i]) {
+                owners[i] = owners[ owners.length - 1 ];
+                owners.pop();
+                isOwner[owner] = false;
+                break;
+            }
+        }
     }
 }
