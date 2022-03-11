@@ -1,30 +1,74 @@
+require("dotenv").config();
 const { expect } = require("chai");
 const { hexStripZeros } = require("ethers/lib/utils");
 const { ethers } = require("hardhat");
+const keccak256 = require('keccak256')
+const Web3 = require("web3");
 
-//0x82f81FAF4B644DbAa665fCd781caC5A2E37A0EF1 0x74bb028830ea67a36507945834d480760f9eaf91f7f93d18671eb0d84d5995800b6ef1c70071023bf3882a17923f3960b868cadcf9079c79c1624254e16f3b901c
-//0x716CC3A781E39ef20375d1B2eCc39A8Bd6b2Efcf 0xc8fa7f7a1cc3b4f2357bcc8496ab95421694f81574765217e7a776cebe20e57235e1159e0bd32c471869e0e53552e791296f28ce72c50b7618db81ea09e154491b
-//0xe50635d8aeEe3f75DA700fbB234e2a9cfBf46a26 0xf0162ea00615250c46d4bff985cf2d018184c08ea41bf384c26d3e021acc06c35fd780defc016ceac77a5a8d1df896716dab7703a5300b867de6e3b4749423201c
+var web3 = new Web3();
 
+const users = [...Array(6).keys()].map(k => ({ pubkey: process.env[`add-${k}`], prikey: process.env[`pri-${k}`], chainId: '0x0000000000000038' }))
+
+
+
+function getSignature(mess, id) {
+  var data = '0x' + keccak256(mess).toString('hex');
+  const res = web3.eth.accounts.sign(
+    data,
+    users[id].prikey
+  ).signature;
+  return res;
+}
+
+function getMessage(...ids) {
+  return '0x' + ids.map(id => users[id].chainId.substring(2) + users[id].pubkey.substring(2)).join('');
+
+}
+
+function getPubkey(...ids) {
+  return ids.map(i => users[i].pubkey);
+}
+
+function getChainId(...ids) {
+  return ids.map(i => users[i].chainId);
+}
+
+function getSignatureByIds(data, ...ids) {
+  return ids.map(i => getSignature(data, i));
+}
 
 describe("MTS", function () {
   it("MTS", async function () {
-     const multiSigFactory = await (await ethers.getContractFactory("MultiSigWalletFactory")).deploy();
-     await multiSigFactory.deployed();
+    const multiSigFactory = await (await ethers.getContractFactory("MultiSigWalletFactory")).deploy();
+    await multiSigFactory.deployed();
+    const createTx = await multiSigFactory.create(getPubkey(0, 1, 2), 1, getChainId(0, 1, 2), getPubkey(0, 1, 2), getSignatureByIds(getMessage(0, 1, 2), 0, 1, 2), 1000);
 
-    const createTx = await multiSigFactory.create(["0x82f81FAF4B644DbAa665fCd781caC5A2E37A0EF1", "0x716CC3A781E39ef20375d1B2eCc39A8Bd6b2Efcf", "0xe50635d8aeEe3f75DA700fbB234e2a9cfBf46a26"], 1, ["0x0000000000000038", "0x0000000000000038", "0x0000000000000038"], ["0x82f81FAF4B644DbAa665fCd781caC5A2E37A0EF1", "0x716CC3A781E39ef20375d1B2eCc39A8Bd6b2Efcf", "0xe50635d8aeEe3f75DA700fbB234e2a9cfBf46a26"], ["0x74bb028830ea67a36507945834d480760f9eaf91f7f93d18671eb0d84d5995800b6ef1c70071023bf3882a17923f3960b868cadcf9079c79c1624254e16f3b901c", "0xc8fa7f7a1cc3b4f2357bcc8496ab95421694f81574765217e7a776cebe20e57235e1159e0bd32c471869e0e53552e791296f28ce72c50b7618db81ea09e154491b", "0xf0162ea00615250c46d4bff985cf2d018184c08ea41bf384c26d3e021acc06c35fd780defc016ceac77a5a8d1df896716dab7703a5300b867de6e3b4749423201c"], 1000);    
-    console.log("Check same user:" ,await multiSigFactory.checkSameUser(["0x82f81FAF4B644DbAa665fCd781caC5A2E37A0EF1", "0x716CC3A781E39ef20375d1B2eCc39A8Bd6b2Efcf"]));
+    console.log("Check same user:", await multiSigFactory.checkSameUser([users[0].pubkey, users[1].pubkey]));
 
-    console.log("All address of 0x82f81FAF4B644DbAa665fCd781caC5A2E37A0EF1:",await multiSigFactory.getAllAddress("0x82f81FAF4B644DbAa665fCd781caC5A2E37A0EF1"));
 
-    await(multiSigFactory.deleteAddress("0xe50635d8aeEe3f75DA700fbB234e2a9cfBf46a26", ["0x0000000000000038", "0x0000000000000038", "0x0000000000000038"], ["0x82f81FAF4B644DbAa665fCd781caC5A2E37A0EF1", "0x716CC3A781E39ef20375d1B2eCc39A8Bd6b2Efcf", "0xe50635d8aeEe3f75DA700fbB234e2a9cfBf46a26"], ["0x74bb028830ea67a36507945834d480760f9eaf91f7f93d18671eb0d84d5995800b6ef1c70071023bf3882a17923f3960b868cadcf9079c79c1624254e16f3b901c", "0xc8fa7f7a1cc3b4f2357bcc8496ab95421694f81574765217e7a776cebe20e57235e1159e0bd32c471869e0e53552e791296f28ce72c50b7618db81ea09e154491b", "0xf0162ea00615250c46d4bff985cf2d018184c08ea41bf384c26d3e021acc06c35fd780defc016ceac77a5a8d1df896716dab7703a5300b867de6e3b4749423201c"], 100000));
-    console.log(await multiSigFactory.checkSameUser(["0x82f81FAF4B644DbAa665fCd781caC5A2E37A0EF1", "0xe50635d8aeEe3f75DA700fbB234e2a9cfBf46a26"]));
-    console.log(await multiSigFactory.getAllAddress("0x82f81FAF4B644DbAa665fCd781caC5A2E37A0EF1"));
-    multisigWalletAddress = await multiSigFactory.ownerToMultiSigWallet("0x82f81FAF4B644DbAa665fCd781caC5A2E37A0EF1")
+    console.log("All address of ", users[0].pubkey, await multiSigFactory.getAllAddress(users[0].pubkey));
+
+    await (multiSigFactory.deleteAddress(users[2].pubkey, getChainId(0, 1, 2), getPubkey(0, 1, 2), getSignatureByIds(getMessage(0, 1, 2), 0, 1, 2), 1000));
+    console.log(await multiSigFactory.checkSameUser([users[0].pubkey, users[2].pubkey]));
+
+
+    console.log(await multiSigFactory.getAllAddress(users[0].pubkey));
+    multisigWalletAddress = await multiSigFactory.ownerToMultiSigWallet(users[0].pubkey)
     console.log("multisigWallet address :", multisigWalletAddress);
-    var multiSigWallet = await ethers.getContractAt("MultiSigWallet", multisigWalletAddress);
+
+    const multiSigWallet = await ethers.getContractAt("MultiSigWallet", multisigWalletAddress);
     console.log("Owners 1:", await multiSigWallet.owners(0))
     console.log("Owners 2:", await multiSigWallet.owners(1))
 
+    console.log("\nMultiSigFatory2:");
+
+    const createTx2 = await multiSigFactory.create(getPubkey(3, 4, 5), 1, getChainId(3, 4, 5), getPubkey(3, 4, 5), getSignatureByIds(getMessage(3, 4, 5), 3, 4, 5), 1000);
+
+    console.log("All address of ", users[3].pubkey, await multiSigFactory.getAllAddress(users[3].pubkey));
+
+    await multiSigFactory.addAddress( getChainId(0, 3), getPubkey(0, 3), getSignatureByIds( getMessage(0, 3), 0, 3 ), 1000 );
+    console.log("All address of ", users[3].pubkey, await multiSigFactory.getAllAddress(users[3].pubkey));
+
+    
   });
 });

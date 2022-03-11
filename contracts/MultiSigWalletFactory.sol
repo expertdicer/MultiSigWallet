@@ -49,10 +49,10 @@ contract MultiSigWalletFactory is Factory, Verifier{
         address x = addresses[0];
         address y = addresses[1];
 
-        require(!isAddressConnection[x] && !isAddressConnection[y] && ownerToMultiSigWallet[x] == ownerToMultiSigWallet[y], 
-        "Both address connected to the same Identity!");
-
         require(isAddressConnection[x] || isAddressConnection[y] , "Need one address connected!");
+        if (isAddressConnection[x] && isAddressConnection[y])
+            require(ownerToMultiSigWallet[x] != ownerToMultiSigWallet[y], 
+            "Both address connected to the same Identity!");
         
         if (!isAddressConnection[x]) {
             MultiSigWallet(ownerToMultiSigWallet[y]).addAddress(x);
