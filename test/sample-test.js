@@ -41,34 +41,36 @@ describe("MTS", function () {
   it("MTS", async function () {
     const multiSigFactory = await (await ethers.getContractFactory("MultiSigWalletFactory")).deploy();
     await multiSigFactory.deployed();
+    console.log("Create first wallet:")
     const createTx = await multiSigFactory.create(getPubkey(0, 1, 2), 1, getChainId(0, 1, 2), getPubkey(0, 1, 2), getSignatureByIds(getMessage(0, 1, 2), 0, 1, 2), 1000);
 
-    console.log("Check same user:", await multiSigFactory.checkSameUser([users[0].pubkey, users[1].pubkey]));
+    console.log("Check same user " + users[0].pubkey + " " + users[1].pubkey + ": ", await multiSigFactory.checkSameUser([users[0].pubkey, users[1].pubkey]));
 
 
     console.log("All address of ", users[0].pubkey, await multiSigFactory.getAllAddress(users[0].pubkey));
 
+    console.log("Delete address: ", users[2].pubkey);
     await (multiSigFactory.deleteAddress(users[2].pubkey, getChainId(0, 1, 2), getPubkey(0, 1, 2), getSignatureByIds(getMessage(0, 1, 2), 0, 1, 2), 1000));
-    console.log(await multiSigFactory.checkSameUser([users[0].pubkey, users[2].pubkey]));
-
-
-    console.log(await multiSigFactory.getAllAddress(users[0].pubkey));
-    multisigWalletAddress = await multiSigFactory.ownerToMultiSigWallet(users[0].pubkey)
-    console.log("multisigWallet address :", multisigWalletAddress);
-
-    const multiSigWallet = await ethers.getContractAt("MultiSigWallet", multisigWalletAddress);
-    console.log("Owners 1:", await multiSigWallet.owners(0))
-    console.log("Owners 2:", await multiSigWallet.owners(1))
-
-    console.log("\nMultiSigFatory2:");
-
+    console.log("All address of", users[0].pubkey, await multiSigFactory.getAllAddress(users[0].pubkey));
+    
+    console.log("Create second wallet:");
     const createTx2 = await multiSigFactory.create(getPubkey(3, 4, 5), 1, getChainId(3, 4, 5), getPubkey(3, 4, 5), getSignatureByIds(getMessage(3, 4, 5), 3, 4, 5), 1000);
 
     console.log("All address of ", users[3].pubkey, await multiSigFactory.getAllAddress(users[3].pubkey));
 
+    console.log("Connect two address: ", users[0].pubkey, users[3].pubkey);
     await multiSigFactory.addAddress( getChainId(0, 3), getPubkey(0, 3), getSignatureByIds( getMessage(0, 3), 0, 3 ), 1000 );
-    console.log("All address of ", users[3].pubkey, await multiSigFactory.getAllAddress(users[3].pubkey));
-
-    
+    console.log("After connect, all address of ", users[3].pubkey, await multiSigFactory.getAllAddress(users[3].pubkey));
   });
+
+  // it("MultiSigWallet", async function () {
+  //   web3.eth.defaultAccount = users[0].pubkey;
+  //   const signer = await ethers.getSigners(); 
+  //   const multiSigWallet = await (await ethers.getContractFactory("MultiSigWallet")).deploy( getPubkey(0, 1, 2), 3);
+  //   await multiSigWallet.deployed();
+  //   console.log(multiSigWallet.address)
+  //   //console.log(await multiSigWallet.getMsgSender({from: web3.eth.accounts[0]}));
+    
+
+  // });
 });
