@@ -2,7 +2,7 @@ require("dotenv").config();
 const { expect } = require("chai");
 const { hexStripZeros } = require("ethers/lib/utils");
 const { ethers } = require("hardhat");
-const keccak256 = require('keccak256')
+const keccak256 = require('keccak256');
 const Web3 = require("web3");
 
 var web3 = new Web3();
@@ -63,14 +63,29 @@ describe("MTS", function () {
     console.log("After connect, all address of ", users[3].pubkey, await multiSigFactory.getAllAddress(users[3].pubkey));
   });
 
-  // it("MultiSigWallet", async function () {
-  //   web3.eth.defaultAccount = users[0].pubkey;
-  //   const signer = await ethers.getSigners(); 
-  //   const multiSigWallet = await (await ethers.getContractFactory("MultiSigWallet")).deploy( getPubkey(0, 1, 2), 3);
-  //   await multiSigWallet.deployed();
-  //   console.log(multiSigWallet.address)
-  //   //console.log(await multiSigWallet.getMsgSender({from: web3.eth.accounts[0]}));
-    
+  
+  
+  it("MultiSigWallet", async function () {
 
-  // });
+    const signer = await ethers.getSigners();
+
+    const multiSigWallet = await (await ethers.getContractFactory("MultiSigWallet")).deploy([signer[0].address, signer[1].address, signer[2].address], 1);
+
+    // change requirement to 2
+    const data = multiSigWallet.interface.encodeFunctionData("changeRequirement(uint256)", [2]);
+    await multiSigWallet.connect(signer[1]).submitTransaction(multiSigWallet.address, 0, data);
+    console.log("change requirement to 2", (await multiSigWallet.required()).toString());
+
+    // change requirement to 3
+    const data2 = multiSigWallet.interface.encodeFunctionData("changeRequirement(uint256)", [3]);
+    await multiSigWallet.connect(signer[0]).submitTransaction(multiSigWallet.address, 0, data2);
+    //await multiSigWallet.connect(signer[0]).revokeConfirmation(1);
+    //console.log("number tx pending:", (await multiSigWallet.getTransactionCount(true, false)).toString());
+    await multiSigWallet.connect(signer[1]).confirmTransaction(1);
+    console.log("number confirm tx 1: ", (await multiSigWallet.getConfirmationCount(1)).toString());
+    console.log("change requirement to 3", (await multiSigWallet.required()).toString());
+    
+    console.log("number tx excute:", (await multiSigWallet.getTransactionCount(false, true)).toString());
+    //console.log(await multiSigWallet.getTransactionIds(0, 1, false, true));
+  });
 });
