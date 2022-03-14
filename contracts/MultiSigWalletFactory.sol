@@ -42,7 +42,7 @@ contract MultiSigWalletFactory is Factory, Verifier{
         address[] calldata addresses,                  // array public key
         bytes[] calldata signature,             // array signature
         uint timestamp
-    ) public {
+    ) public returns(address){
         // require(timestamp + 1000 <= block.timestamp, "Too late!");
         require(verifyIntegrity(chainID,addresses,signature), "Bullshitery!");
         require(addresses.length == 2, "Only two addresses");
@@ -58,14 +58,14 @@ contract MultiSigWalletFactory is Factory, Verifier{
             MultiSigWallet(ownerToMultiSigWallet[y]).addAddress(x);
             ownerToMultiSigWallet[x] = ownerToMultiSigWallet[y];
             isAddressConnection[x] = true;
-            return;
+            return address(ownerToMultiSigWallet[y]);
         }
 
         if (!isAddressConnection[y]) {
             MultiSigWallet(ownerToMultiSigWallet[x]).addAddress(y);
             ownerToMultiSigWallet[y] = ownerToMultiSigWallet[x];
             isAddressConnection[y] = true;
-            return;
+            return address(ownerToMultiSigWallet[x]);
         }
 
         MultiSigWallet multiSigX = MultiSigWallet(ownerToMultiSigWallet[x]);
@@ -83,6 +83,7 @@ contract MultiSigWalletFactory is Factory, Verifier{
                 ownerToMultiSigWallet[ addressX[i] ] = multiSigY;
             }
             multiSigX.disableMultiSigWallet();
+            return address(ownerToMultiSigWallet[y]);
         }
     
         else {
@@ -91,6 +92,7 @@ contract MultiSigWalletFactory is Factory, Verifier{
                 ownerToMultiSigWallet[ addressY[i] ] = multiSigX;
             }
             multiSigY.disableMultiSigWallet();
+            return address(ownerToMultiSigWallet[x]);
         }
 
     }

@@ -8,6 +8,17 @@
     "ethers": "^5.4.4",
     "hardhat": "^2.6.0"
   },
+  "scripts": {
+    "compile": "hardhat compile",
+    "docgen": "solidity-docgen --solc-module solc-0.8 -s contracts -t ./docs/template",
+    "prettify": "prettier --write contracts/*.sol",
+    "deploy": "hardhat run scripts/deploy.js",
+    "test": "hardhat test",
+    "gas": "hardhat test",
+    "coverage": "hardhat coverage",
+    "fork": "hardhat node",
+    "clean": "hardhat clean"
+  },
   "dependencies": {
     "big-number": "^2.0.0",
     "bignumber": "^1.1.0",
