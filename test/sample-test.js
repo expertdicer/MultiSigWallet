@@ -57,10 +57,17 @@ describe("MTS", function () {
     const createTx2 = await multiSigFactory.create(getPubkey(3, 4, 5), 1, getChainId(3, 4, 5), getPubkey(3, 4, 5), getSignatureByIds(getMessage(3, 4, 5), 3, 4, 5), 1000);
 
     console.log("All address of ", users[3].pubkey, await multiSigFactory.getAllAddress(users[3].pubkey));
+    
+    const addressWallet1 = await multiSigFactory.ownerToMultiSigWallet(users[0].pubkey);
+    const addressWallet2 = await multiSigFactory.ownerToMultiSigWallet(users[3].pubkey);
 
     console.log("Connect two address: ", users[0].pubkey, users[3].pubkey);
     await multiSigFactory.addAddress( getChainId(0, 3), getPubkey(0, 3), getSignatureByIds( getMessage(0, 3), 0, 3 ), 1000 );
     console.log("After connect, all address of ", users[3].pubkey, await multiSigFactory.getAllAddress(users[3].pubkey));
+    
+    const wallet1 = await ethers.getContractAt("MultiSigWallet", addressWallet1);
+    console.log("Owner of multiSigWallet 1 after merger: ", await wallet1.getOwners());
+    console.log("address of wallet 2: ", addressWallet2);
   });
 
   

@@ -71,8 +71,8 @@ contract MultiSigWalletFactory is Factory, Verifier{
         MultiSigWallet multiSigX = MultiSigWallet(ownerToMultiSigWallet[x]);
         MultiSigWallet multiSigY = MultiSigWallet(ownerToMultiSigWallet[y]);
         
-        require(multiSigX.isMultiSigWalletEnabled() == true);
-        require(multiSigY.isMultiSigWalletEnabled() == true);
+        // require(multiSigX.isMultiSigWalletEnabled() == true);
+        // require(multiSigY.isMultiSigWalletEnabled() == true);
 
         address[] memory addressX = multiSigX.getOwners();
         address[] memory addressY = multiSigY.getOwners();
@@ -82,7 +82,7 @@ contract MultiSigWalletFactory is Factory, Verifier{
                 multiSigY.addAddress(addressX[i]);
                 ownerToMultiSigWallet[ addressX[i] ] = multiSigY;
             }
-            multiSigX.disableMultiSigWallet();
+            multiSigX.changeNewOwner(address(multiSigY));
         }
     
         else {
@@ -90,7 +90,7 @@ contract MultiSigWalletFactory is Factory, Verifier{
                 multiSigX.addAddress(addressY[i]);
                 ownerToMultiSigWallet[ addressY[i] ] = multiSigX;
             }
-            multiSigY.disableMultiSigWallet();
+            multiSigY.changeNewOwner(address(multiSigX));
         }
 
     }
