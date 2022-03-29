@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity 0.8.0;
-import "./OwnerManager.sol";
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Lặc Số Một - <expertdicer@gmail.com>

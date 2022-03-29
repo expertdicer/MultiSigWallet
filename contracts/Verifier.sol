@@ -22,16 +22,29 @@ contract Verifier {
         return keccak256(data);
     }
 
-    function getMessageHash(bytes8[] memory chainID, 
-        address[] memory add) public view returns (bytes32) {
-        
+    function getMessageHash(
+        bytes8[] memory chainID, 
+        address[] memory add
+    ) public view returns (bytes32) {
         bytes memory data;
-        for (uint i = 0; i < chainID.length; i++) {
+        for (uint i = 0; i < chainID.length; i++) 
+        {
             data = abi.encodePacked(data, abi.encodePacked(chainID[i], add[i]));
         }
-
         return keccak256(data);
+    }
 
+    function getMessageHash(
+        address[] calldata addresses, 
+        uint nonce
+    ) public view returns (bytes32) {
+        bytes memory data;
+        for (uint i = 0; i < addresses.length; i++) 
+        {
+            data = abi.encodePacked(data, addresses[i]);
+        }
+        data = abi.encodePacked(data, nonce);
+        return keccak256(data);
     }
 
     function testAbi(
