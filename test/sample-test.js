@@ -7,7 +7,7 @@ const Web3 = require("web3");
 
 var web3 = new Web3();
 
-const users = [...Array(11).keys()].map(k => ({ pubkey: process.env[`add-${k}`], prikey: process.env[`pri-${k}`], chainId: '0x0000000000000038' }))
+const users = [...Array(6).keys()].map(k => ({ pubkey: process.env[`add-${k}`], prikey: process.env[`pri-${k}`], chainId: '0x0000000000000038' }))
 
 
 function getSignature(mess, id) {
