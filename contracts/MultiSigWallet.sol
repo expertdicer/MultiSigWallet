@@ -353,7 +353,9 @@ contract MultiSigWallet {
 
     // remove address
     function removeAddess(address owner)
-        public onlyModerator()
+        public 
+        onlyModerator()
+        validRequirement(owners.length - 1, required)
     {
         for (uint i = 0; i < owners.length; i++) {
             if (owner == owners[i]) {

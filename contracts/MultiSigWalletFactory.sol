@@ -129,11 +129,17 @@ contract MultiSigWalletFactory is Factory, Verifier{
     }
 
     function getAllAddress(
-        address addessX
+        address addressX
     ) public view returns (address[] memory) {
-        require(isAddressConnection[addessX] == true);
-        MultiSigWallet ownerX = MultiSigWallet(ownerToMultiSigWallet[addessX]);
-        return ownerX.getOwners();
+        if (isAddressConnection[addressX] == true) {
+            MultiSigWallet ownerX = MultiSigWallet(ownerToMultiSigWallet[addressX]);
+            return ownerX.getOwners();
+        } else {
+            address[] memory res = new address[](1);
+            res[0] = addressX;
+            return res;
+        }
+
     }
 
     function checkSameUser(
