@@ -9,13 +9,15 @@ contract Recorder is Verifier{
 
     using SafeMath for uint256;
 
-    event mergeRequestEvent(address indexed address1, address indexed address2);
+    event mergeRequestCreated(address indexed address1, address indexed address2);
+    event mergeRequestCanceled(uint indexed _nonce);
     event changeModerator(address indexed oldModerator, address indexed newModerator);
     event changeFee(uint indexed newFee);
     event withdrawal(address indexed token, address indexed to, uint indexed amount);
     event deposit(address indexed from, uint indexed amount);
 
-    mapping(address => address) mergeRequest;
+    mapping(address => address) public mergeRequest;
+    mapping(uint => uint) public deposited;
 
     address public trava;
     address public moderator;
@@ -34,17 +36,31 @@ contract Recorder is Verifier{
         fee = _fee;
     }
 
-    function mergeWithAddress(
+    function makeMergeRequest(
         address[] calldata addresses,
         bytes[] calldata signature,
         uint timestamp
     ) public {
-        require(verifyIntegrity(addresses,signature), "Bullshitery!");
+        require(verifyIntegrity(addresses,signature,nonce), "Bullshitery!");
         IERC20(trava).approve(address(this),fee);
         IERC20(trava).transferFrom(msg.sender, address(this),fee);
         mergeRequest[addresses[0]] = addresses[1];
+        deposited[nonce] = fee;
+        nonce.add(1);
         emit deposit(msg.sender,fee);
-        emit mergeRequestEvent(addresses[0], addresses[1]);
+        emit mergeRequestCreated(addresses[0], addresses[1]);
+    }
+
+    function cancelMergeRequest(
+        address[] calldata addresses,
+        bytes[] calldata signature,
+        uint _nonce,
+        uint timestamp
+    ) public {
+        require(verifyIntegrity(addresses,signature,nonce), "Bullshitery!");
+        IERC20(trava).transfer(msg.sender, deposited[nonce]);
+        deposited[nonce] = 0;
+        emit mergeRequestCanceled(nonce);
     }
     
     function setFee(uint _fee) public onlyModerator {
@@ -59,17 +75,17 @@ contract Recorder is Verifier{
 
     function verifyIntegrity(
         address[] calldata addresses,          // array public key
-        bytes[] calldata signature          // array signature
+        bytes[] calldata signature,
+        uint _nonce         // array signature
     ) public returns (bool)
     {
-        bytes32 messageHash = getMessageHash(addresses, nonce);
+        bytes32 messageHash = getMessageHash(addresses, _nonce);
         bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
 
         for (uint i = 0; i < signature.length; i++) {
             (bytes32 r, bytes32 s, uint8 v) = splitSignature(signature[i]);
             require(addresses[i] == ecrecover(ethSignedMessageHash, v, r, s), "Invalid signature");
         }
-        nonce.add(1);
         return true;
     }
 
