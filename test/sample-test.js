@@ -127,12 +127,13 @@ describe("MTS", function () {
     // make merge request
     await recorder.makeMergeRequest(getPubkey(0, 1), getSignatureByIds(getMessage2(0, 0, 1), 0, 1), 1000);
     console.log( await recorder.mergeRequest(users[0].pubkey), users[1].pubkey );
-    console.log(await recorder.nonce());
+    console.log("nonce", await recorder.nonce());
     console.log(await recorder.deposited(0));
 
 
     await recorder.makeMergeRequest(getPubkey(1, 2), getSignatureByIds(getMessage2(1, 1, 2), 1, 2), 1000);
     console.log( await recorder.mergeRequest(users[1].pubkey), users[2].pubkey );
+    console.log("nonce", await recorder.nonce());
     console.log(await recorder.deposited(1));
 
     await recorder.cancelMergeRequest(getPubkey(1, 2), getSignatureByIds(getMessage2(1, 1, 2), 1, 2), 1, 1000);
