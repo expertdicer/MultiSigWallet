@@ -46,7 +46,8 @@ contract Recorder is Verifier{
         IERC20(trava).transferFrom(msg.sender, address(this),fee);
         mergeRequest[addresses[0]] = addresses[1];
         deposited[nonce] = fee;
-        nonce.add(1);
+        //nonce.add(1);
+        nonce = nonce.add(1);
         emit deposit(msg.sender,fee);
         emit mergeRequestCreated(addresses[0], addresses[1]);
     }
@@ -57,10 +58,10 @@ contract Recorder is Verifier{
         uint _nonce,
         uint timestamp
     ) public {
-        require(verifyIntegrity(addresses,signature,nonce), "Bullshitery!");
-        IERC20(trava).transfer(msg.sender, deposited[nonce]);
-        deposited[nonce] = 0;
-        emit mergeRequestCanceled(nonce);
+        require(verifyIntegrity(addresses,signature,_nonce), "Bullshitery!"); // _nonce
+        IERC20(trava).transfer(msg.sender, deposited[_nonce]); // _nonce
+        deposited[_nonce] = 0; // _nonce
+        emit mergeRequestCanceled(_nonce); // _nonce
     }
     
     function setFee(uint _fee) public onlyModerator {

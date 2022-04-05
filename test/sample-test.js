@@ -19,8 +19,19 @@ function getSignature(mess, id) {
   return res;
 }
 
+function changeToHex256(num) {
+  var hex = num.toString(16).toString();
+  while (hex.length < 64) hex = '0' + hex;
+  return hex;
+}
+
 function getMessage(...ids) {
   return '0x' + ids.map(id => users[id].chainId.substring(2) + users[id].pubkey.substring(2)).join('');
+
+}
+
+function getMessage2(nonce, ...ids) {
+  return '0x' + ids.map(id => users[id].pubkey.substring(2)).join('') + changeToHex256(nonce);
 
 }
 
@@ -102,4 +113,31 @@ describe("MTS", function () {
     console.log("number tx excute:", (await multiSigWallet.getTransactionCount(false, true)).toString());
     //console.log(await multiSigWallet.getTransactionIds(0, 1, false, true));
   });
+
+  it("Check recoder", async function() {
+    const travaToken = await (await ethers.getContractFactory("TravaToken")).deploy();
+    await travaToken.transfer(users[0].pubkey, 100000);
+    await travaToken.transfer(users[1].pubkey, 100000);
+    await travaToken.transfer(users[2].pubkey, 100000);
+    await travaToken.transfer(users[3].pubkey, 100000);
+
+    const recorder = await (await ethers.getContractFactory("Recorder")).deploy(travaToken.address, 1);
+    console.log(await recorder.moderator());
+    
+    // make merge request
+    await recorder.makeMergeRequest(getPubkey(0, 1), getSignatureByIds(getMessage2(0, 0, 1), 0, 1), 1000);
+    console.log( await recorder.mergeRequest(users[0].pubkey), users[1].pubkey );
+    console.log(await recorder.nonce());
+    console.log(await recorder.deposited(0));
+
+
+    await recorder.makeMergeRequest(getPubkey(1, 2), getSignatureByIds(getMessage2(1, 1, 2), 1, 2), 1000);
+    console.log( await recorder.mergeRequest(users[1].pubkey), users[2].pubkey );
+    console.log(await recorder.deposited(1));
+
+    await recorder.cancelMergeRequest(getPubkey(1, 2), getSignatureByIds(getMessage2(1, 1, 2), 1, 2), 1, 1000);
+    console.log(await recorder.deposited(1));
+    
+  });
+
 });
