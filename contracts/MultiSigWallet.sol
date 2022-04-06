@@ -129,7 +129,7 @@ contract MultiSigWallet {
     /**
     * @notice This modifier require the _require is valid with ownerCount
     * @param ownerCount The ownerCount to check
-    * @param _require The requirement confirmation to check
+    * @param _required The requirement confirmation to check
     */
     modifier validRequirement(uint ownerCount, uint _required) {
         require(ownerCount <= MAX_OWNER_COUNT
