@@ -47,7 +47,7 @@ contract Recorder is Verifier{
         mergeRequest[addresses[0]] = addresses[1];
         deposited[nonce] = fee;
         uint at = nonce;
-        nonce.add(1);
+        nonce = nonce.add(1);
         emit deposit(msg.sender,fee);
         emit mergeRequestCreated(addresses[0], addresses[1],at);
     }
