@@ -37,8 +37,14 @@ function getSignatureByIds(data, ...ids) {
 
 async function main() {
     const accounts = await hre.ethers.getSigners();
-    const multiSigFactory = await (await ethers.getContractFactory("MultiSigWalletFactory")).deploy();
+
+    // -------------deploy contract------------
+    var MulisigFactory = await ethers.getContractFactory("MultiSigWalletFactory");
+    //const multiSigFactory = await (await ethers.getContractFactory("MultiSigWalletFactory")).deploy();
+    var multiSigFactory = await MulisigFactory.deploy();
     await multiSigFactory.deployed();
+    // ----------------------------------------
+
     const createTx = await multiSigFactory.create(getPubkey(0, 1, 2), 1, getChainId(0, 1, 2), getPubkey(0, 1, 2), getSignatureByIds(getMessage(0, 1, 2), 0, 1, 2), 1000);
 
     console.log("Check same user:", await multiSigFactory.checkSameUser([users[0].pubkey, users[1].pubkey]));
