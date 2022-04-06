@@ -10,6 +10,16 @@ import "./Verifier.sol";
 contract MultiSigWalletFactory is Factory, Verifier{
     mapping (address => MultiSigWallet) public ownerToMultiSigWallet;
     mapping (address => bool) public isAddressConnection;
+    mapping (address => bool) public updater;
+
+    modifier onlyUpdater() {
+        require(updater[msg.sender] == true, "only updater");
+        _;
+    }
+
+    constructor() public {   
+        updater[msg.sender] = true;
+    }
 
     function create(
         address[] calldata _owners, 
@@ -180,6 +190,44 @@ contract MultiSigWalletFactory is Factory, Verifier{
 
         return true;
 
+    }
+
+    function addNewUpdater(address _updater) public onlyUpdater {
+        updater[_updater] = true;
+    }
+
+    function removeUpdater(address _updater) public onlyUpdater {
+        updater[_updater] = false;
+    }
+
+    function updaterConnectAddress(address addressA, address[] calldata addressesB) public onlyUpdater returns (address) {
+        require(isAddressConnection[addressA], "address A must be connected!");
+        MultiSigWallet multiSigA = MultiSigWallet(ownerToMultiSigWallet[addressA]);
+
+        for (uint i = 0; i < addressesB.length; i++) {
+            address addressB = addressesB[i];
+
+            if (!isAddressConnection[addressB]) {
+                multiSigA.addAddress(addressB);
+                isAddressConnection[addressB] = true;
+                ownerToMultiSigWallet[addressB] = multiSigA;
+                continue;
+            }
+
+            else {
+                MultiSigWallet multiSigB = MultiSigWallet(ownerToMultiSigWallet[addressB]);
+                if (multiSigA != multiSigB) {
+                    address[] memory ownerOfWalletB = multiSigB.getOwners();
+                    for (uint i = 0; i < ownerOfWalletB.length; i++) {
+                        multiSigA.addAddress(ownerOfWalletB[i]);
+                        ownerToMultiSigWallet[ ownerOfWalletB[i] ] = multiSigA;
+                    }
+                    multiSigB.changeNewOwner( address(multiSigA) );
+                }
+            }
+        }
+
+        return address(multiSigA);
     }
       
 

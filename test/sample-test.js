@@ -122,7 +122,7 @@ describe("MTS", function () {
     await travaToken.transfer(users[3].pubkey, 100000);
 
     const recorder = await (await ethers.getContractFactory("Recorder")).deploy(travaToken.address, 1);
-    console.log(await recorder.moderator());
+    // const recorder = await ethers.getContractAt("TravaToken", "0x8384DF1C9E68d21D8a812688f7f3DC93FAE06F90");
     
     // make merge request
     await recorder.makeMergeRequest(getPubkey(0, 1), getSignatureByIds(getMessage2(0, 0, 1), 0, 1), 1000);
@@ -135,10 +135,25 @@ describe("MTS", function () {
     console.log( await recorder.mergeRequest(users[1].pubkey), users[2].pubkey );
     console.log("nonce", await recorder.nonce());
     console.log(await recorder.deposited(1));
-
-    await recorder.cancelMergeRequest(getPubkey(1, 2), getSignatureByIds(getMessage2(1, 1, 2), 1, 2), 1, 1000);
-    console.log(await recorder.deposited(1));
     
+  });
+
+  it("Check role updater in multisigFatory", async function() {
+    const signer = await ethers.getSigners();
+
+    const multiSigFactory = await (await ethers.getContractFactory("MultiSigWalletFactory")).deploy();
+    await multiSigFactory.deployed();
+    console.log("Create first wallet:")
+    const createTx = await multiSigFactory.create(getPubkey(0, 1, 2), 1, getChainId(0, 1, 2), getPubkey(0, 1, 2), getSignatureByIds(getMessage(0, 1, 2), 0, 1, 2), 1000);
+
+    await multiSigFactory.addNewUpdater( signer[7].address );
+    console.log("check updater", signer[7].address, await multiSigFactory.updater(signer[7].address));        
+
+    await multiSigFactory.connect(signer[7]).addNewUpdater( signer[8].address );
+    console.log("check updater", signer[8].address, await multiSigFactory.updater(signer[8].address));
+  
+    await multiSigFactory.connect(signer[7]).updaterConnectAddress(users[0].pubkey, getPubkey(3, 4, 5));
+    console.log("check same wallet", await multiSigFactory.checkSameUser(getPubkey(0, 5)));
   });
 
 });

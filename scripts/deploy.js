@@ -1,17 +1,18 @@
 const hre = require("hardhat");
 
 async function main() {  
+    console.log("Start deploy!!")
     const multiSigFactory = await (await hre.ethers.getContractFactory("MultiSigWalletFactory")).deploy();
     await multiSigFactory.deployed();
+    console.log("MultiSigFactory deployed at ", multiSigFactory.address);
+
 
     const travaToken = await (await hre.ethers.getContractFactory("TravaToken")).deploy();
     await travaToken.deployed();
+    console.log("TravaToken deployed at ", travaToken.address);
 
     const recorder = await (await ethers.getContractFactory("Recorder")).deploy(travaToken.address, 0);
     await recorder.deployed();
-
-    console.log("MultiSigFactory deployed at ", multiSigFactory.address);
-    console.log("TravaToken deployed at ", travaToken.address);
     console.log("Recorder deployed at ", recorder.address);
 
 }
