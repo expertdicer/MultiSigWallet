@@ -194,6 +194,134 @@ async function main() {
       } 
     }
 
+
+    // create wallet 3
+    while(true) {
+      try {
+        console.log("start create wallet 2!!");
+        const fatoryCreateTx2 = await multiSigFactory.create(getPubkey(7, 8), 1, getChainId(7, 8), getPubkey(7, 8), getSignatureByIds(getMessage(7, 8), 7, 8), 10000, {gasLimit: 2000000});
+        await fatoryCreateTx2.wait();
+      } catch(e) {
+        console.log(e);
+      }
+
+      const checkSame = await multiSigFactory.checkSameUser([users[7].pubkey, users[8].pubkey]);
+
+      if (checkSame) {
+        console.log("Create wallet 3", await multiSigFactory.getAllAddress(users[7].pubkey));
+        break;
+      }
+    }
+
+    // create merge request address 0 vs address 8
+    while(true) {
+      const nonceBefore = Number(await recorder.nonce());
+      try {
+        console.log("start merge request!!");
+        const createMerRequest1 = await recorder.makeMergeRequest(getPubkey(0, 8), getSignatureByIds(getMessage2(nonceBefore, 0, 8), 0, 8), 10000, {gasLimit: 2000000});
+        await createMerRequest1.wait();
+      } catch (e) {
+        console.log(e);
+      }
+      
+      const nonceAfter = Number(await recorder.nonce());
+      if (nonceAfter > nonceBefore) {
+        console.log("create merge request", users[0].pubkey, users[8].pubkey);
+        break;
+      }
+      
+    }
+
+    // create merge request address 0 vs address 9
+    while(true) {
+      const nonceBefore = Number(await recorder.nonce());
+      try {
+        console.log("start merge request!!");
+        const createMerRequest1 = await recorder.makeMergeRequest(getPubkey(0, 9), getSignatureByIds(getMessage2(nonceBefore, 0, 9), 0, 9), 10000, {gasLimit: 2000000});
+        await createMerRequest1.wait();
+      } catch (e) {
+        console.log(e);
+      }
+      
+      const nonceAfter = Number(await recorder.nonce());
+      if (nonceAfter > nonceBefore) {
+        console.log("create merge request", users[0].pubkey, users[9].pubkey);
+        break;
+      }
+      
+    }
+
+    // create merge request address 5 vs address 10
+    while(true) {
+      const nonceBefore = Number(await recorder.nonce());
+      try {
+        console.log("start merge request!!");
+        const createMerRequest1 = await recorder.makeMergeRequest(getPubkey(5, 10), getSignatureByIds(getMessage2(nonceBefore, 5, 10), 5, 10), 10000, {gasLimit: 2000000});
+        await createMerRequest1.wait();
+      } catch (e) {
+        console.log(e);
+      }
+      
+      const nonceAfter = Number(await recorder.nonce());
+      if (nonceAfter > nonceBefore) {
+        console.log("create merge request", users[5].pubkey, users[10].pubkey);
+        break;
+      }
+      
+    }
+
+    // connect address 0, 8
+    while(true) {
+      try {
+        console.log("start create tx connect address!!");
+        const connectAddress = await multiSigFactory.addAddress(getChainId(0, 8), getPubkey(0, 8), getSignatureByIds( getMessage(0, 8), 0, 8 ), 1000, {gasLimit: 2000000})
+      } catch (e) {
+        console.log(e);
+      }
+
+      const checkSame = await multiSigFactory.checkSameUser([users[0].pubkey, users[8].pubkey]);
+      if (checkSame) {
+        console.log("Connect two address", users[0].pubkey, users[8].pubkey);
+        console.log("after connect, all address of wallet", await multiSigFactory.getAllAddress(users[0].pubkey));
+        break;
+      } 
+    }
+
+    // connect address 0, 9
+    while(true) {
+      try {
+        console.log("start create tx connect address!!");
+        const connectAddress = await multiSigFactory.addAddress(getChainId(0, 9), getPubkey(0, 9), getSignatureByIds( getMessage(0, 9), 0, 9 ), 1000, {gasLimit: 2000000})
+      } catch (e) {
+        console.log(e);
+      }
+
+      const checkSame = await multiSigFactory.checkSameUser([users[0].pubkey, users[9].pubkey]);
+      if (checkSame) {
+        console.log("Connect two address", users[0].pubkey, users[9].pubkey);
+        console.log("after connect, all address of wallet", await multiSigFactory.getAllAddress(users[0].pubkey));
+        break;
+      } 
+    }
+
+    // connect address 5, 10
+    while(true) {
+      try {
+        console.log("start create tx connect address!!");
+        const connectAddress = await multiSigFactory.addAddress(getChainId(5, 10), getPubkey(5, 10), getSignatureByIds( getMessage(5, 10), 5, 10 ), 1000, {gasLimit: 2000000})
+      } catch (e) {
+        console.log(e);
+      }
+
+      const checkSame = await multiSigFactory.checkSameUser([users[5].pubkey, users[10].pubkey]);
+      if (checkSame) {
+        console.log("Connect two address", users[5].pubkey, users[10].pubkey);
+        console.log("after connect, all address of wallet", await multiSigFactory.getAllAddress(users[5].pubkey));
+        break;
+      } 
+    }
+
+
 }
 
 // We recommend this pattern to be able to use async/await everywhere
