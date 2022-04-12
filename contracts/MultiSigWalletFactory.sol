@@ -8,6 +8,8 @@ import "./Verifier.sol";
 /// @title Multisignature wallet factory - Allows creation of multisig wallet.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWalletFactory is Factory, Verifier{
+
+    event addUser(address[] address1, address address2);
     mapping (address => MultiSigWallet) public ownerToMultiSigWallet;
     mapping (address => bool) public isAddressConnection;
     mapping (address => bool) public updater;
@@ -45,6 +47,7 @@ contract MultiSigWalletFactory is Factory, Verifier{
             ownerToMultiSigWallet[ _owners[i] ] = wallet;
             isAddressConnection[_owners[i]] = true;
         }
+        emit addUser(addresses, address(wallet));
     }
 
     function addAddress(
@@ -69,6 +72,7 @@ contract MultiSigWalletFactory is Factory, Verifier{
             ownerToMultiSigWallet[x] = ownerToMultiSigWallet[y];
             isAddressConnection[x] = true;
             return address(ownerToMultiSigWallet[y]);
+            emit addUser(addresses, address(ownerToMultiSigWallet[y]));
         }
 
         if (!isAddressConnection[y]) {
@@ -76,6 +80,7 @@ contract MultiSigWalletFactory is Factory, Verifier{
             ownerToMultiSigWallet[y] = ownerToMultiSigWallet[x];
             isAddressConnection[y] = true;
             return address(ownerToMultiSigWallet[x]);
+            emit addUser(addresses, address(ownerToMultiSigWallet[x]));
         }
 
         MultiSigWallet multiSigX = MultiSigWallet(ownerToMultiSigWallet[x]);
@@ -94,6 +99,7 @@ contract MultiSigWalletFactory is Factory, Verifier{
             }
             multiSigX.changeNewOwner(address(multiSigY));
             return address(ownerToMultiSigWallet[y]);
+            emit addUser(addresses, address(multiSigY));
         }
     
         else {
@@ -103,7 +109,9 @@ contract MultiSigWalletFactory is Factory, Verifier{
             }
             multiSigY.changeNewOwner(address(multiSigX));
             return address(ownerToMultiSigWallet[x]);
+            emit addUser(addresses, address(multiSigX));
         }
+        
 
     }
 
