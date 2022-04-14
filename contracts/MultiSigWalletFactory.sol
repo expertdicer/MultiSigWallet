@@ -10,6 +10,8 @@ import "./Verifier.sol";
 contract MultiSigWalletFactory is Factory, Verifier{
 
     event addUser(address[] address1, address address2);
+    event connectUser(bytes8[] chainID, address[] addresses, bytes[] signature);
+    event deleteUser(address userRemove, bytes8[] chainID, address[] addresses, bytes[] signature);
     mapping (address => MultiSigWallet) public ownerToMultiSigWallet;
     mapping (address => bool) public isAddressConnection;
     mapping (address => bool) public updater;
@@ -48,6 +50,7 @@ contract MultiSigWalletFactory is Factory, Verifier{
             isAddressConnection[_owners[i]] = true;
         }
         emit addUser(addresses, address(wallet));
+        emit connectUser(chainID, addresses, signature);
     }
 
     function addAddress(
@@ -58,58 +61,126 @@ contract MultiSigWalletFactory is Factory, Verifier{
     ) public returns(address){
         // require(timestamp + 1000 <= block.timestamp, "Too late!");
         require(verifyIntegrity(chainID,addresses,signature), "Bullshitery!");
-        require(addresses.length == 2, "Only two addresses");
-        address x = addresses[0];
-        address y = addresses[1];
+        // require(addresses.length == 2, "Only two addresses");
+        // address x = addresses[0];
+        // address y = addresses[1];
 
-        require(isAddressConnection[x] || isAddressConnection[y] , "Need one address connected!");
-        if (isAddressConnection[x] && isAddressConnection[y])
-            require(ownerToMultiSigWallet[x] != ownerToMultiSigWallet[y], 
-            "Both address connected to the same Identity!");
+        // require(isAddressConnection[x] || isAddressConnection[y] , "Need one address connected!");
         
-        if (!isAddressConnection[x]) {
-            MultiSigWallet(ownerToMultiSigWallet[y]).addAddress(x);
-            ownerToMultiSigWallet[x] = ownerToMultiSigWallet[y];
-            isAddressConnection[x] = true;
-            return address(ownerToMultiSigWallet[y]);
-            emit addUser(addresses, address(ownerToMultiSigWallet[y]));
-        }
-
-        if (!isAddressConnection[y]) {
-            MultiSigWallet(ownerToMultiSigWallet[x]).addAddress(y);
-            ownerToMultiSigWallet[y] = ownerToMultiSigWallet[x];
-            isAddressConnection[y] = true;
-            return address(ownerToMultiSigWallet[x]);
-            emit addUser(addresses, address(ownerToMultiSigWallet[x]));
-        }
-
-        MultiSigWallet multiSigX = MultiSigWallet(ownerToMultiSigWallet[x]);
-        MultiSigWallet multiSigY = MultiSigWallet(ownerToMultiSigWallet[y]);
+        // if (isAddressConnection[x] && isAddressConnection[y])
+        //     require(ownerToMultiSigWallet[x] != ownerToMultiSigWallet[y], 
+        //     "Both address connected to the same Identity!");
         
-        // require(multiSigX.isMultiSigWalletEnabled() == true);
-        // require(multiSigY.isMultiSigWalletEnabled() == true);
+        // if (!isAddressConnection[x]) {
+        //     MultiSigWallet(ownerToMultiSigWallet[y]).addAddress(x);
+        //     ownerToMultiSigWallet[x] = ownerToMultiSigWallet[y];
+        //     isAddressConnection[x] = true;
+        //     return address(ownerToMultiSigWallet[y]);
+        //     emit addUser(addresses, address(ownerToMultiSigWallet[y]));
+        //     emit connectUser(chainID, addresses, signature);
+        // }
 
-        address[] memory addressX = multiSigX.getOwners();
-        address[] memory addressY = multiSigY.getOwners();
+        // if (!isAddressConnection[y]) {
+        //     MultiSigWallet(ownerToMultiSigWallet[x]).addAddress(y);
+        //     ownerToMultiSigWallet[y] = ownerToMultiSigWallet[x];
+        //     isAddressConnection[y] = true;
+        //     return address(ownerToMultiSigWallet[x]);
+        //     emit addUser(addresses, address(ownerToMultiSigWallet[x]));
+        //     emit connectUser(chainID, addresses, signature);
+        // }
 
-        if (addressX.length < addressY.length) {
-            for (uint i = 0; i < addressX.length; i++) {
-                multiSigY.addAddress(addressX[i]);
-                ownerToMultiSigWallet[ addressX[i] ] = multiSigY;
-            }
-            multiSigX.changeNewOwner(address(multiSigY));
-            return address(ownerToMultiSigWallet[y]);
-            emit addUser(addresses, address(multiSigY));
-        }
+        // MultiSigWallet multiSigX = MultiSigWallet(ownerToMultiSigWallet[x]);
+        // MultiSigWallet multiSigY = MultiSigWallet(ownerToMultiSigWallet[y]);
+
+        // address[] memory addressX = multiSigX.getOwners();
+        // address[] memory addressY = multiSigY.getOwners();
+
+        // if (addressX.length < addressY.length) {
+        //     for (uint i = 0; i < addressX.length; i++) {
+        //         multiSigY.addAddress(addressX[i]);
+        //         ownerToMultiSigWallet[ addressX[i] ] = multiSigY;
+        //     }
+        //     multiSigX.changeNewOwner(address(multiSigY));
+        //     return address(ownerToMultiSigWallet[y]);
+        //     emit addUser(addresses, address(multiSigY));
+        //     emit connectUser(chainID, addresses, signature);
+        // }
     
-        else {
-            for (uint i = 0; i < addressY.length; i++) {
-                multiSigX.addAddress(addressY[i]);
-                ownerToMultiSigWallet[ addressY[i] ] = multiSigX;
+        // else {
+        //     for (uint i = 0; i < addressY.length; i++) {
+        //         multiSigX.addAddress(addressY[i]);
+        //         ownerToMultiSigWallet[ addressY[i] ] = multiSigX;
+        //     }
+        //     multiSigY.changeNewOwner(address(multiSigX));
+        //     return address(ownerToMultiSigWallet[x]);
+        //     emit addUser(addresses, address(multiSigX));
+        //     emit connectUser(chainID, addresses, signature);
+        // }
+
+        bool checkIsWallet = false;
+        for (uint i = 0; i < addresses.length; i++) {
+            if (isAddressConnection[ addresses[i] ] == true) {
+                checkIsWallet = true;
+                break;
             }
-            multiSigY.changeNewOwner(address(multiSigX));
-            return address(ownerToMultiSigWallet[x]);
-            emit addUser(addresses, address(multiSigX));
+        }
+
+        // don't have multiSigWallet
+        // create new
+        if (checkIsWallet == false) {
+            uint required = (addresses.length + 1) / 2;
+            MultiSigWallet wallet = new MultiSigWallet(addresses, required);
+            register( address(wallet) );
+            return address(wallet);
+            emit addUser(addresses, address(wallet));
+            emit connectUser(chainID, addresses, signature);
+        }
+
+        // have wallet
+        else {
+            address[] memory addressesTmp;
+            address[] memory rootOwner;
+            MultiSigWallet rootWallet;
+            MultiSigWallet walletTmp;
+
+            for (uint i = 0; i < addresses.length; i++) {
+                if (isAddressConnection[ addresses[i] ] == true) {
+                    walletTmp = MultiSigWallet (ownerToMultiSigWallet[ addresses[i] ]);
+                    addressesTmp = walletTmp.getOwners();
+                    if (addressesTmp.length > rootOwner.length) {
+                        rootWallet = walletTmp;
+                        rootOwner = addressesTmp;
+                    }
+                }
+            }
+
+            for (uint i = 0; i < addresses.length; i++) {
+                if (isAddressConnection[ addresses[i] ] == true) {
+                    walletTmp = MultiSigWallet (ownerToMultiSigWallet[ addresses[i] ]);
+
+                    if (walletTmp == rootWallet)
+                        continue;
+
+                    addressesTmp = walletTmp.getOwners();
+
+                    for (uint j = 0; j < addressesTmp.length; j++) {
+                        rootWallet.addAddress( addressesTmp[j] );
+                        ownerToMultiSigWallet[ addressesTmp[j] ] = rootWallet;
+                    }
+                    walletTmp.changeNewOwner( address(rootWallet) );
+
+                }
+
+                else {
+                    rootWallet.addAddress( addresses[i] );
+                    ownerToMultiSigWallet[ addresses[i] ] = rootWallet;
+                    isAddressConnection[ addresses[i] ] = true;
+                }
+            }
+
+            return address(rootWallet);
+            emit addUser(addresses, address(rootWallet));
+            emit connectUser(chainID, addresses, signature);
         }
         
 
@@ -141,9 +212,9 @@ contract MultiSigWalletFactory is Factory, Verifier{
         if (2 * numberAccept >= int(ownerX.getOwners().length) ) {
             ownerX.removeAddess(removeX);
             isAddressConnection[removeX] = false;
+            emit deleteUser(removeX, chainID, addresses, signature);
         }
         
-
     }
 
     function getAllAddress(
