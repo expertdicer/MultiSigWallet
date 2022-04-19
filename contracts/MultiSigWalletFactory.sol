@@ -10,33 +10,24 @@ import "./Verifier.sol";
 contract MultiSigWalletFactory is Factory, Verifier{
 
     event addUser(address[] address1, address address2);
-    event connectUser(bytes8[] chainID, address[] addresses, bytes[] signature);
-    event deleteUser(address userRemove, bytes8[] chainID, address[] addresses, bytes[] signature);
+    event connectUser(address[] addresses, uint _nonce, bytes[] signature);
+    event deleteUser(address userRemove, address[] addresses, bytes[] signature);
     mapping (address => MultiSigWallet) public ownerToMultiSigWallet;
     mapping (address => bool) public isAddressConnection;
     mapping (address => bool) public updater;
-
-    modifier onlyUpdater() {
-        require(updater[msg.sender] == true, "only updater");
-        _;
-    }
-
-    constructor() public {   
-        updater[msg.sender] = true;
-    }
+    mapping (MultiSigWallet => uint) public nonce;
 
     function create(
         address[] calldata _owners, 
         uint _required, 
-        bytes8[] calldata chainID,              // array chain ID
-        address[] calldata addresses,                  // array public key
+        uint _nonce,
         bytes[] calldata signature,             // array signature
         uint timestamp
         ) public
         returns (address wallet)
     {   
         // require(timestamp + 1000 <= block.timestamp, "Too late!");
-        require(verifyIntegrity(chainID,addresses,signature), "Bullshitery!");
+        require(verifyIntegrity(_owners, _nonce, signature), "Bullshitery!");
 
         for (uint i = 0; i < _owners.length; i++) {
             require(isAddressConnection[_owners[i]] == false, "Owner is used");
@@ -49,73 +40,21 @@ contract MultiSigWalletFactory is Factory, Verifier{
             ownerToMultiSigWallet[ _owners[i] ] = wallet;
             isAddressConnection[_owners[i]] = true;
         }
-        emit addUser(addresses, address(wallet));
-        emit connectUser(chainID, addresses, signature);
+
+        nonce[wallet] = 0;
+
+        emit addUser(_owners, address(wallet));
+        emit connectUser(_owners, nonce[wallet], signature);
     }
 
     function addAddress(
-        bytes8[] calldata chainID,              // array chain ID
         address[] calldata addresses,                  // array public key
+        uint _nonce,
         bytes[] calldata signature,             // array signature
         uint timestamp
     ) public returns(address){
-        // require(timestamp + 1000 <= block.timestamp, "Too late!");
-        require(verifyIntegrity(chainID,addresses,signature), "Bullshitery!");
-        // require(addresses.length == 2, "Only two addresses");
-        // address x = addresses[0];
-        // address y = addresses[1];
 
-        // require(isAddressConnection[x] || isAddressConnection[y] , "Need one address connected!");
-        
-        // if (isAddressConnection[x] && isAddressConnection[y])
-        //     require(ownerToMultiSigWallet[x] != ownerToMultiSigWallet[y], 
-        //     "Both address connected to the same Identity!");
-        
-        // if (!isAddressConnection[x]) {
-        //     MultiSigWallet(ownerToMultiSigWallet[y]).addAddress(x);
-        //     ownerToMultiSigWallet[x] = ownerToMultiSigWallet[y];
-        //     isAddressConnection[x] = true;
-        //     return address(ownerToMultiSigWallet[y]);
-        //     emit addUser(addresses, address(ownerToMultiSigWallet[y]));
-        //     emit connectUser(chainID, addresses, signature);
-        // }
-
-        // if (!isAddressConnection[y]) {
-        //     MultiSigWallet(ownerToMultiSigWallet[x]).addAddress(y);
-        //     ownerToMultiSigWallet[y] = ownerToMultiSigWallet[x];
-        //     isAddressConnection[y] = true;
-        //     return address(ownerToMultiSigWallet[x]);
-        //     emit addUser(addresses, address(ownerToMultiSigWallet[x]));
-        //     emit connectUser(chainID, addresses, signature);
-        // }
-
-        // MultiSigWallet multiSigX = MultiSigWallet(ownerToMultiSigWallet[x]);
-        // MultiSigWallet multiSigY = MultiSigWallet(ownerToMultiSigWallet[y]);
-
-        // address[] memory addressX = multiSigX.getOwners();
-        // address[] memory addressY = multiSigY.getOwners();
-
-        // if (addressX.length < addressY.length) {
-        //     for (uint i = 0; i < addressX.length; i++) {
-        //         multiSigY.addAddress(addressX[i]);
-        //         ownerToMultiSigWallet[ addressX[i] ] = multiSigY;
-        //     }
-        //     multiSigX.changeNewOwner(address(multiSigY));
-        //     return address(ownerToMultiSigWallet[y]);
-        //     emit addUser(addresses, address(multiSigY));
-        //     emit connectUser(chainID, addresses, signature);
-        // }
-    
-        // else {
-        //     for (uint i = 0; i < addressY.length; i++) {
-        //         multiSigX.addAddress(addressY[i]);
-        //         ownerToMultiSigWallet[ addressY[i] ] = multiSigX;
-        //     }
-        //     multiSigY.changeNewOwner(address(multiSigX));
-        //     return address(ownerToMultiSigWallet[x]);
-        //     emit addUser(addresses, address(multiSigX));
-        //     emit connectUser(chainID, addresses, signature);
-        // }
+        require(verifyIntegrity(addresses, _nonce, signature), "Bullshitery!");
 
         bool checkIsWallet = false;
         for (uint i = 0; i < addresses.length; i++) {
@@ -131,9 +70,10 @@ contract MultiSigWalletFactory is Factory, Verifier{
             uint required = (addresses.length + 1) / 2;
             MultiSigWallet wallet = new MultiSigWallet(addresses, required);
             register( address(wallet) );
+            nonce[wallet] = 0;
             return address(wallet);
             emit addUser(addresses, address(wallet));
-            emit connectUser(chainID, addresses, signature);
+            emit connectUser(addresses, nonce[wallet], signature);
         }
 
         // have wallet
@@ -153,6 +93,8 @@ contract MultiSigWalletFactory is Factory, Verifier{
                     }
                 }
             }
+
+            require( nonce[rootWallet] + 1 == _nonce, "Nonce must be inc 1" );
 
             for (uint i = 0; i < addresses.length; i++) {
                 if (isAddressConnection[ addresses[i] ] == true) {
@@ -177,45 +119,44 @@ contract MultiSigWalletFactory is Factory, Verifier{
                     isAddressConnection[ addresses[i] ] = true;
                 }
             }
+            nonce[rootWallet] = nonce[rootWallet] + 1;
 
             return address(rootWallet);
             emit addUser(addresses, address(rootWallet));
-            emit connectUser(chainID, addresses, signature);
-        }
-        
-
-    }
-
-    function deleteAddress(
-        address removeX,
-        bytes8[] calldata chainID,              // array chain ID
-        address[] calldata addresses, 
-        bytes[] calldata signature,             // array signature
-        uint timestamp
-    ) public {
-
-        require(isAddressConnection[removeX], "Address not connected");
-        MultiSigWallet ownerX = MultiSigWallet(ownerToMultiSigWallet[removeX]);
-        int numberAccept = 0;
-        bytes32 messageHash = getMessageHash(chainID, addresses);
-        bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
-        for(uint i = 0; i < chainID.length ;i++) {
-
-            if (isAddressConnection[ addresses[i] ] != true || MultiSigWallet(ownerToMultiSigWallet[addresses[i]]) != ownerX)
-                continue;
-
-            (bytes32 r, bytes32 s, uint8 v) = splitSignature(signature[i]);
-            if (addresses[i] == ecrecover(ethSignedMessageHash, v, r, s) )
-                numberAccept++;
-        }
-
-        if (2 * numberAccept >= int(ownerX.getOwners().length) ) {
-            ownerX.removeAddess(removeX);
-            isAddressConnection[removeX] = false;
-            emit deleteUser(removeX, chainID, addresses, signature);
+            emit connectUser(addresses, nonce[rootWallet], signature);
         }
         
     }
+
+   
+    function updateAddress( 
+        address[][] calldata addresses,                  // array public key
+        uint[] calldata _nonce,
+        bytes[][] calldata signature,             // array signature
+        uint timestamp        
+     ) public {
+        require(_nonce.length >= 1 && _nonce.length == addresses.length && _nonce.length == signature.length, "Cannot update address");
+        
+        uint nonceMin = _nonce[0];
+        uint nonceMax = _nonce[0];
+        for (uint i = 1; i < _nonce.length; i++ ) {
+            if (nonceMin > _nonce[i]) 
+                nonceMin = _nonce[i];
+
+            if (nonceMax < _nonce[i])
+                nonceMax = _nonce[i];
+        }
+
+        for (uint _nonceId = nonceMin; _nonceId <= nonceMax; _nonceId++) {
+            for (uint i = 0; i < _nonce.length; i++ ) {
+                if (_nonce[i] == _nonceId) {
+                    addAddress(addresses[i], _nonce[i], signature[i], timestamp);
+                }
+            }
+        }
+        
+    }
+    
 
     function getAllAddress(
         address addressX
@@ -243,71 +184,68 @@ contract MultiSigWalletFactory is Factory, Verifier{
         return true;
     }
 
+
+    mapping (MultiSigWallet => uint) addressSig;
     function verifyIntegrity(
-        bytes8[] calldata chainID,              // array chain ID
         address[] calldata addresses,          // array public key
+        uint _nonce,
         bytes[] calldata signature            // array signature
     ) public returns (bool)
     {
-
         
-        // for(uint i = 0; i < chainID.length ;i++)
-        // {
-        //   bytes32 messageHash = getMessageHash(chainID[i], addresses[i]);
-        //   bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
-        //   (bytes32 r, bytes32 s, uint8 v) = splitSignature(signature[i]);
-        //   require(addresses[i] == ecrecover(ethSignedMessageHash, v, r, s), "Invalid signature");
-        // }   
-        
-        bytes32 messageHash = getMessageHash(chainID, addresses);
-        bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
+        uint addressNotInWallet = 0;
+        MultiSigWallet wallet;
 
-        for (uint i = 0; i < chainID.length; i++) {
-            (bytes32 r, bytes32 s, uint8 v) = splitSignature(signature[i]);
-            require(addresses[i] == ecrecover(ethSignedMessageHash, v, r, s), "Invalid signature");
+        for (uint i = 0; i < addresses.length; i++) {
+            if (isAddressConnection[ addresses[i] ] != true ) {
+                addressNotInWallet = addressNotInWallet + 1;
+            } else {
+                addressSig[ MultiSigWallet( ownerToMultiSigWallet[ addresses[i] ] ) ] = 0;
+
+            }
         }
 
-        return true;
+        bytes32 messageHash = getMessageHash(addresses, _nonce);
+        bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
 
-    }
+        uint addressAddConnection = 0;
 
-    function addNewUpdater(address _updater) public onlyUpdater {
-        updater[_updater] = true;
-    }
-
-    function removeUpdater(address _updater) public onlyUpdater {
-        updater[_updater] = false;
-    }
-
-    function updaterConnectAddress(address addressA, address[] calldata addressesB) public onlyUpdater returns (address) {
-        require(isAddressConnection[addressA], "address A must be connected!");
-        MultiSigWallet multiSigA = MultiSigWallet(ownerToMultiSigWallet[addressA]);
-
-        for (uint i = 0; i < addressesB.length; i++) {
-            address addressB = addressesB[i];
-
-            if (!isAddressConnection[addressB]) {
-                multiSigA.addAddress(addressB);
-                isAddressConnection[addressB] = true;
-                ownerToMultiSigWallet[addressB] = multiSigA;
-                continue;
-            }
-
-            else {
-                MultiSigWallet multiSigB = MultiSigWallet(ownerToMultiSigWallet[addressB]);
-                if (multiSigA != multiSigB) {
-                    address[] memory ownerOfWalletB = multiSigB.getOwners();
-                    for (uint i = 0; i < ownerOfWalletB.length; i++) {
-                        multiSigA.addAddress(ownerOfWalletB[i]);
-                        ownerToMultiSigWallet[ ownerOfWalletB[i] ] = multiSigA;
-                    }
-                    multiSigB.changeNewOwner( address(multiSigA) );
+        for (uint i = 0; i < addresses.length; i++) {
+            address tmp = addresses[i];
+            (bytes32 r, bytes32 s, uint8 v) = splitSignature(signature[i]);
+            
+            if(tmp == ecrecover(ethSignedMessageHash, v, r, s)) {
+                if (isAddressConnection[ tmp ] == true) {
+                    wallet = MultiSigWallet( ownerToMultiSigWallet[ tmp ] );
+                    addressSig[wallet] = addressSig[wallet] + 1;
+                } else {
+                    addressAddConnection = addressAddConnection + 1;
                 }
             }
         }
 
-        return address(multiSigA);
+        bool isValidSignature = true;
+        if (addressAddConnection != addressNotInWallet) {
+            isValidSignature = false;
+        }
+
+        for (uint i = 0; i < addresses.length; i++) {
+            address tmp = addresses[i];
+            if (isAddressConnection[tmp] == true) {
+                wallet = MultiSigWallet( ownerToMultiSigWallet[tmp] );
+                if ( addressSig[wallet] < ((wallet.getOwners()).length + 1)/2 ) {
+                    isValidSignature = false;
+                    break;
+                }
+            }
+        }
+
+        require(isValidSignature == true, "Invalid signature");
+
+        return true;
     }
-      
+
+
+
 
 }

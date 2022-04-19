@@ -23,13 +23,12 @@ contract Verifier {
     }
 
     function getMessageHash(
-        bytes8[] memory chainID, 
         address[] memory add
     ) public view returns (bytes32) {
         bytes memory data;
-        for (uint i = 0; i < chainID.length; i++) 
+        for (uint i = 0; i < add.length; i++) 
         {
-            data = abi.encodePacked(data, abi.encodePacked(chainID[i], add[i]));
+            data = abi.encodePacked(data, add[i]);
         }
         return keccak256(data);
     }
