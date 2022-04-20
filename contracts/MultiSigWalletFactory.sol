@@ -28,6 +28,7 @@ contract MultiSigWalletFactory is Factory, Verifier{
     {   
         // require(timestamp + 1000 <= block.timestamp, "Too late!");
         require(verifyIntegrity(_owners, _nonce, signature), "Bullshitery!");
+        require(_nonce == 1, "Create nonce must be equal 1");
 
         for (uint i = 0; i < _owners.length; i++) {
             require(isAddressConnection[_owners[i]] == false, "Owner is used");
@@ -41,7 +42,7 @@ contract MultiSigWalletFactory is Factory, Verifier{
             isAddressConnection[_owners[i]] = true;
         }
 
-        nonce[wallet] = 0;
+        nonce[wallet] = 1;
 
         emit addUser(_owners, address(wallet));
         emit connectUser(_owners, nonce[wallet], signature);
@@ -70,7 +71,7 @@ contract MultiSigWalletFactory is Factory, Verifier{
             uint required = (addresses.length + 1) / 2;
             MultiSigWallet wallet = new MultiSigWallet(addresses, required);
             register( address(wallet) );
-            nonce[wallet] = 0;
+            nonce[wallet] = 1;
             return address(wallet);
             emit addUser(addresses, address(wallet));
             emit connectUser(addresses, nonce[wallet], signature);
