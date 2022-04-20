@@ -55,6 +55,11 @@ describe("MTS", function () {
     await multiSigFactory.create( getPubkey(0, 1, 2), 2, 0, getSignatureByIds(getMessage2(0, 0, 1, 2), 0, 1, 2), 1000 );
     console.log( await( multiSigFactory.getAllAddress(users[0].pubkey)));
 
+    await multiSigFactory.create( getPubkey(4, 5), 2, 0, getSignatureByIds(getMessage2(0, 4, 5), 4, 5), 1000 );
+    console.log( await( multiSigFactory.getAllAddress(users[4].pubkey)));
+
+    await multiSigFactory.create( getPubkey(6, 7), 2, 0, getSignatureByIds(getMessage2(0, 6, 7), 6, 7), 1000 );
+    console.log( await( multiSigFactory.getAllAddress(users[6].pubkey)));
 
     const _nonce = await(multiSigFactory.nonce( (await(multiSigFactory.ownerToMultiSigWallet(users[0].pubkey))) )) ;
 

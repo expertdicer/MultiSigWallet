@@ -94,7 +94,7 @@ contract MultiSigWalletFactory is Factory, Verifier{
                 }
             }
 
-            require( nonce[rootWallet] + 1 == _nonce, "Nonce must be inc 1" );
+            require( nonce[rootWallet] + 1 == _nonce, "nonce is not valid" );
 
             for (uint i = 0; i < addresses.length; i++) {
                 if (isAddressConnection[ addresses[i] ] == true) {
