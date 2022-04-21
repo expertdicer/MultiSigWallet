@@ -7,7 +7,7 @@ const Web3 = require("web3");
 
 var web3 = new Web3();
 
-const users = [...Array(6).keys()].map(k => ({ pubkey: process.env[`add-${k}`], prikey: process.env[`pri-${k}`], chainId: '0x0000000000000038' }))
+const users = [...Array(11).keys()].map(k => ({ pubkey: process.env[`add-${k}`], prikey: process.env[`pri-${k}`]}))
 
 
 function getSignature(mess, id) {
@@ -26,7 +26,7 @@ function changeToHex256(num) {
 }
 
 function getMessage(...ids) {
-  return '0x' + ids.map(id => users[id].chainId.substring(2) + users[id].pubkey.substring(2)).join('');
+  return '0x' + ids.map(id => users[id].pubkey.substring(2)).join('');
 
 }
 
@@ -39,10 +39,6 @@ function getPubkey(...ids) {
   return ids.map(i => users[i].pubkey);
 }
 
-function getChainId(...ids) {
-  return ids.map(i => users[i].chainId);
-}
-
 function getSignatureByIds(data, ...ids) {
   return ids.map(i => getSignature(data, i));
 }
@@ -52,22 +48,15 @@ describe("MTS", function () {
     const multiSigFactory = await (await ethers.getContractFactory("MultiSigWalletFactory")).deploy();
     await multiSigFactory.deployed();
     console.log("Create first wallet:")
-    const createTx = await multiSigFactory.create(getPubkey(0, 1, 2), 1, getChainId(0, 1, 2), getPubkey(0, 1, 2), getSignatureByIds(getMessage(0, 1, 2), 0, 1, 2), 1000);
+    const createTx = await multiSigFactory.create(getPubkey(0, 1, 2), 1, getSignatureByIds(getMessage(0, 1, 2), 0, 1, 2), 1000);
     var checkSameUser = await multiSigFactory.checkSameUser([users[0].pubkey, users[1].pubkey]);
     expect(checkSameUser).equal(true);
     console.log("Check same user " + users[0].pubkey + " " + users[1].pubkey + ": ", checkSameUser);
 
     console.log("All address of ", users[0].pubkey, await multiSigFactory.getAllAddress(users[0].pubkey));
-    console.log("Delete address: ", users[2].pubkey);
-    await (multiSigFactory.deleteAddress(users[2].pubkey, getChainId(0, 1, 2), getPubkey(0, 1, 2), getSignatureByIds(getMessage(0, 1, 2), 0, 1, 2), 1000));
-    checkSameUser = await multiSigFactory.checkSameUser([users[0].pubkey, users[2].pubkey]);
-    expect(checkSameUser).equal(false);
-    console.log("Check same user ", users[0].pubkey, users[1].pubkey, "after delete: ", checkSameUser);
-
-    console.log("All address of", users[0].pubkey, "after delete user", users[2].pubkey,await multiSigFactory.getAllAddress(users[0].pubkey));
     
     console.log("Create second wallet:");
-    const createTx2 = await multiSigFactory.create(getPubkey(3, 4, 5), 1, getChainId(3, 4, 5), getPubkey(3, 4, 5), getSignatureByIds(getMessage(3, 4, 5), 3, 4, 5), 1000);
+    const createTx2 = await multiSigFactory.create(getPubkey(3, 4, 5), 1, getSignatureByIds(getMessage(3, 4, 5), 3, 4, 5), 1000);
 
     console.log("All address of ", users[3].pubkey, await multiSigFactory.getAllAddress(users[3].pubkey));
     
@@ -75,7 +64,7 @@ describe("MTS", function () {
     const addressWallet2 = await multiSigFactory.ownerToMultiSigWallet(users[3].pubkey);
 
     console.log("Connect two address: ", users[0].pubkey, users[3].pubkey);
-    await multiSigFactory.addAddress( getChainId(0, 3), getPubkey(0, 3), getSignatureByIds( getMessage(0, 3), 0, 3 ), 1000 );
+    await multiSigFactory.addAddress(getPubkey(0, 3), getSignatureByIds( getMessage(0, 3), 0, 3 ), 1000 );
     console.log("After connect, all address of ", users[3].pubkey, await multiSigFactory.getAllAddress(users[3].pubkey));
     console.log("After connect, all address of ", users[0].pubkey, await multiSigFactory.getAllAddress(users[0].pubkey));
     
@@ -136,24 +125,6 @@ describe("MTS", function () {
     console.log("nonce", await recorder.nonce());
     console.log(await recorder.deposited(1));
     
-  });
-
-  it("Check role updater in multisigFatory", async function() {
-    const signer = await ethers.getSigners();
-
-    const multiSigFactory = await (await ethers.getContractFactory("MultiSigWalletFactory")).deploy();
-    await multiSigFactory.deployed();
-    console.log("Create first wallet:")
-    const createTx = await multiSigFactory.create(getPubkey(0, 1, 2), 1, getChainId(0, 1, 2), getPubkey(0, 1, 2), getSignatureByIds(getMessage(0, 1, 2), 0, 1, 2), 1000);
-
-    await multiSigFactory.addNewUpdater( signer[7].address );
-    console.log("check updater", signer[7].address, await multiSigFactory.updater(signer[7].address));        
-
-    await multiSigFactory.connect(signer[7]).addNewUpdater( signer[8].address );
-    console.log("check updater", signer[8].address, await multiSigFactory.updater(signer[8].address));
-  
-    await multiSigFactory.connect(signer[7]).updaterConnectAddress(users[0].pubkey, getPubkey(3, 4, 5));
-    console.log("check same wallet", await multiSigFactory.checkSameUser(getPubkey(0, 5)));
   });
 
 });
