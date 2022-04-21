@@ -11,7 +11,7 @@ var web3 = new Web3();
 const hre = require("hardhat");
 
 
-const users = [...Array(11).keys()].map(k => ({ pubkey: process.env[`add-${k}`], prikey: process.env[`pri-${k}`], chainId: '0x0000000000000038' }))
+const users = [...Array(11).keys()].map(k => ({ pubkey: process.env[`add-${k}`], prikey: process.env[`pri-${k}`]}))
 
 
 function getSignature(mess, id) {
@@ -30,7 +30,7 @@ function changeToHex256(num) {
 }
 
 function getMessage(...ids) {
-  return '0x' + ids.map(id => users[id].chainId.substring(2) + users[id].pubkey.substring(2)).join('');
+  return '0x' + ids.map(id => users[id].pubkey.substring(2)).join('');
 
 }
 
@@ -41,10 +41,6 @@ function getMessage2(nonce, ...ids) {
 
 function getPubkey(...ids) {
   return ids.map(i => users[i].pubkey);
-}
-
-function getChainId(...ids) {
-  return ids.map(i => users[i].chainId);
 }
 
 function getSignatureByIds(data, ...ids) {
@@ -70,7 +66,7 @@ async function main() {
     while(true) {
       try {
         console.log("start create wallet 1!!");
-        const fatoryCreateTx1 = await multiSigFactory.create(getPubkey(0, 1, 2), 1, getChainId(0, 1, 2), getPubkey(0, 1, 2), getSignatureByIds(getMessage(0, 1, 2), 0, 1, 2), 10000, {gasLimit: 2000000});
+        const fatoryCreateTx1 = await multiSigFactory.create(getPubkey(0, 1, 2), 1, getPubkey(0, 1, 2), getSignatureByIds(getMessage(0, 1, 2), 0, 1, 2), 10000, {gasLimit: 2000000});
         await fatoryCreateTx1.wait();
       } catch(e) {
         console.log(e);
@@ -88,7 +84,7 @@ async function main() {
     while(true) {
       try {
         console.log("start create tx delete!!");
-        const deleteAddTx = await multiSigFactory.deleteAddress(users[2].pubkey, getChainId(0, 1, 2), getPubkey(0, 1, 2), getSignatureByIds(getMessage(0, 1, 2), 0, 1, 2), 1000, {gasLimit: 2000000});
+        const deleteAddTx = await multiSigFactory.deleteAddress(users[2].pubkey, getPubkey(0, 1, 2), getSignatureByIds(getMessage(0, 1, 2), 0, 1, 2), 1000, {gasLimit: 2000000});
         await deleteAddTx.wait();
       } catch(e) {
         console.log(e);
@@ -108,7 +104,7 @@ async function main() {
     while(true) {
       try {
         console.log("start create wallet 2!!");
-        const fatoryCreateTx2 = await multiSigFactory.create(getPubkey(3, 4, 5), 1, getChainId(3, 4, 5), getPubkey(3, 4, 5), getSignatureByIds(getMessage(3, 4, 5), 3, 4, 5), 10000, {gasLimit: 2000000});
+        const fatoryCreateTx2 = await multiSigFactory.create(getPubkey(3, 4, 5), 1, getPubkey(3, 4, 5), getSignatureByIds(getMessage(3, 4, 5), 3, 4, 5), 10000, {gasLimit: 2000000});
         await fatoryCreateTx2.wait();
       } catch(e) {
         console.log(e);
@@ -145,7 +141,7 @@ async function main() {
     while(true) {
       try {
         console.log("start create tx connect address!!");
-        const connectAddress = await multiSigFactory.addAddress(getChainId(0, 3), getPubkey(0, 3), getSignatureByIds( getMessage(0, 3), 0, 3 ), 1000, {gasLimit: 2000000})
+        const connectAddress = await multiSigFactory.addAddress(getPubkey(0, 3), getSignatureByIds( getMessage(0, 3), 0, 3 ), 1000, {gasLimit: 2000000})
       } catch (e) {
         console.log(e);
       }
@@ -199,7 +195,7 @@ async function main() {
     while(true) {
       try {
         console.log("start create wallet 2!!");
-        const fatoryCreateTx2 = await multiSigFactory.create(getPubkey(7, 8), 1, getChainId(7, 8), getPubkey(7, 8), getSignatureByIds(getMessage(7, 8), 7, 8), 10000, {gasLimit: 2000000});
+        const fatoryCreateTx2 = await multiSigFactory.create(getPubkey(7, 8), 1, getPubkey(7, 8), getSignatureByIds(getMessage(7, 8), 7, 8), 10000, {gasLimit: 2000000});
         await fatoryCreateTx2.wait();
       } catch(e) {
         console.log(e);
@@ -274,7 +270,7 @@ async function main() {
     while(true) {
       try {
         console.log("start create tx connect address!!");
-        const connectAddress = await multiSigFactory.addAddress(getChainId(0, 8), getPubkey(0, 8), getSignatureByIds( getMessage(0, 8), 0, 8 ), 1000, {gasLimit: 2000000})
+        const connectAddress = await multiSigFactory.addAddress(getPubkey(0, 8), getSignatureByIds( getMessage(0, 8), 0, 8 ), 1000, {gasLimit: 2000000})
       } catch (e) {
         console.log(e);
       }
@@ -291,7 +287,7 @@ async function main() {
     while(true) {
       try {
         console.log("start create tx connect address!!");
-        const connectAddress = await multiSigFactory.addAddress(getChainId(0, 9), getPubkey(0, 9), getSignatureByIds( getMessage(0, 9), 0, 9 ), 1000, {gasLimit: 2000000})
+        const connectAddress = await multiSigFactory.addAddress(getPubkey(0, 9), getSignatureByIds( getMessage(0, 9), 0, 9 ), 1000, {gasLimit: 2000000})
       } catch (e) {
         console.log(e);
       }
@@ -308,7 +304,7 @@ async function main() {
     while(true) {
       try {
         console.log("start create tx connect address!!");
-        const connectAddress = await multiSigFactory.addAddress(getChainId(5, 10), getPubkey(5, 10), getSignatureByIds( getMessage(5, 10), 5, 10 ), 1000, {gasLimit: 2000000})
+        const connectAddress = await multiSigFactory.addAddress(getPubkey(5, 10), getSignatureByIds( getMessage(5, 10), 5, 10 ), 1000, {gasLimit: 2000000})
       } catch (e) {
         console.log(e);
       }

@@ -26,7 +26,6 @@ contract MultiSigWalletFactory is Factory, Verifier{
     function create(
         address[] calldata _owners, 
         uint _required, 
-        bytes8[] calldata chainID,              // array chain ID
         address[] calldata addresses,                  // array public key
         bytes[] calldata signature,             // array signature
         uint timestamp
@@ -34,7 +33,7 @@ contract MultiSigWalletFactory is Factory, Verifier{
         returns (address wallet)
     {   
         // require(timestamp + 1000 <= block.timestamp, "Too late!");
-        require(verifyIntegrity(chainID,addresses,signature), "Bullshitery!");
+        require(verifyIntegrity(addresses,signature), "Bullshitery!");
 
         for (uint i = 0; i < _owners.length; i++) {
             require(isAddressConnection[_owners[i]] == false, "Owner is used");
@@ -51,13 +50,12 @@ contract MultiSigWalletFactory is Factory, Verifier{
     }
 
     function addAddress(
-        bytes8[] calldata chainID,              // array chain ID
         address[] calldata addresses,                  // array public key
         bytes[] calldata signature,             // array signature
         uint timestamp
     ) public returns(address){
         // require(timestamp + 1000 <= block.timestamp, "Too late!");
-        require(verifyIntegrity(chainID,addresses,signature), "Bullshitery!");
+        require(verifyIntegrity(addresses,signature), "Bullshitery!");
         require(addresses.length == 2, "Only two addresses");
         address x = addresses[0];
         address y = addresses[1];
@@ -117,7 +115,6 @@ contract MultiSigWalletFactory is Factory, Verifier{
 
     function deleteAddress(
         address removeX,
-        bytes8[] calldata chainID,              // array chain ID
         address[] calldata addresses, 
         bytes[] calldata signature,             // array signature
         uint timestamp
@@ -126,9 +123,9 @@ contract MultiSigWalletFactory is Factory, Verifier{
         require(isAddressConnection[removeX], "Address not connected");
         MultiSigWallet ownerX = MultiSigWallet(ownerToMultiSigWallet[removeX]);
         int numberAccept = 0;
-        bytes32 messageHash = getMessageHash(chainID, addresses);
+        bytes32 messageHash = getMessageHash(addresses);
         bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
-        for(uint i = 0; i < chainID.length ;i++) {
+        for(uint i = 0; i < addresses.length ;i++) {
 
             if (isAddressConnection[ addresses[i] ] != true || MultiSigWallet(ownerToMultiSigWallet[addresses[i]]) != ownerX)
                 continue;
@@ -173,25 +170,15 @@ contract MultiSigWalletFactory is Factory, Verifier{
     }
 
     function verifyIntegrity(
-        bytes8[] calldata chainID,              // array chain ID
         address[] calldata addresses,          // array public key
         bytes[] calldata signature            // array signature
     ) public returns (bool)
     {
-
         
-        // for(uint i = 0; i < chainID.length ;i++)
-        // {
-        //   bytes32 messageHash = getMessageHash(chainID[i], addresses[i]);
-        //   bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
-        //   (bytes32 r, bytes32 s, uint8 v) = splitSignature(signature[i]);
-        //   require(addresses[i] == ecrecover(ethSignedMessageHash, v, r, s), "Invalid signature");
-        // }   
-        
-        bytes32 messageHash = getMessageHash(chainID, addresses);
+        bytes32 messageHash = getMessageHash(addresses);
         bytes32 ethSignedMessageHash = getEthSignedMessageHash(messageHash);
 
-        for (uint i = 0; i < chainID.length; i++) {
+        for (uint i = 0; i < addresses.length; i++) {
             (bytes32 r, bytes32 s, uint8 v) = splitSignature(signature[i]);
             require(addresses[i] == ecrecover(ethSignedMessageHash, v, r, s), "Invalid signature");
         }

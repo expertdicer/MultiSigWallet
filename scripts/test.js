@@ -7,7 +7,7 @@ const Web3 = require("web3");
 
 var web3 = new Web3(new Web3.providers.HttpProvider("https://speedy-nodes-nyc.moralis.io/724eeac97cb0de89ff3cffce/eth/ropsten"));
 
-const users = [...Array(11).keys()].map(k => ({ pubkey: process.env[`add-${k}`], prikey: process.env[`pri-${k}`], chainId: '0x0000000000000038' }))
+const users = [...Array(11).keys()].map(k => ({ pubkey: process.env[`add-${k}`], prikey: process.env[`pri-${k}`]}))
 
 
 function getSignature(mess, id) {
@@ -26,7 +26,7 @@ function changeToHex256(num) {
 }
 
 function getMessage(...ids) {
-  return '0x' + ids.map(id => users[id].chainId.substring(2) + users[id].pubkey.substring(2)).join('');
+  return '0x' + ids.map(id => users[id].pubkey.substring(2)).join('');
 
 }
 
