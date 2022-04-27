@@ -9,9 +9,9 @@ import "./Verifier.sol";
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWalletFactory is Factory, Verifier{
 
-    event addUser(address[] address1, address address2);
-    event connectUser(address[] addresses, bytes[] signature);
-    event deleteUser(address userRemove, address[] addresses, bytes[] signature);
+    event AddUser(address[] address1, address address2);
+    event ConnectUser(address[] addresses, bytes[] signature);
+    event DeleteUser(address userRemove, address[] addresses, bytes[] signature);
     mapping (address => MultiSigWallet) public ownerToMultiSigWallet;
     mapping (address => bool) public isAddressConnection;
 
@@ -37,8 +37,8 @@ contract MultiSigWalletFactory is Factory, Verifier{
             ownerToMultiSigWallet[ _owners[i] ] = wallet;
             isAddressConnection[_owners[i]] = true;
         }
-        emit addUser(_owners, address(wallet));
-        emit connectUser(_owners, signature);
+        emit AddUser(_owners, address(wallet));
+        emit ConnectUser(_owners, signature);
     }
 
     function addAddress(
@@ -63,9 +63,10 @@ contract MultiSigWalletFactory is Factory, Verifier{
             uint required = (addresses.length + 1) / 2;
             MultiSigWallet wallet = new MultiSigWallet(addresses, required);
             register( address(wallet) );
+
+            emit AddUser(addresses, address(wallet));
+            emit ConnectUser(addresses, signature);
             return address(wallet);
-            emit addUser(addresses, address(wallet));
-            emit connectUser(addresses, signature);
         }
 
         // have wallet
@@ -109,10 +110,10 @@ contract MultiSigWalletFactory is Factory, Verifier{
                     isAddressConnection[ addresses[i] ] = true;
                 }
             }
-
+            
+            emit AddUser(addresses, address(rootWallet));
+            emit ConnectUser(addresses, signature);
             return address(rootWallet);
-            emit addUser(addresses, address(rootWallet));
-            emit connectUser(addresses, signature);
         }
         
 
@@ -143,7 +144,7 @@ contract MultiSigWalletFactory is Factory, Verifier{
         if (2 * numberAccept >= int(ownerX.getOwners().length) ) {
             ownerX.removeAddess(removeX);
             isAddressConnection[removeX] = false;
-            emit deleteUser(removeX, addresses, signature);
+            emit DeleteUser(removeX, addresses, signature);
         }
         
     }
