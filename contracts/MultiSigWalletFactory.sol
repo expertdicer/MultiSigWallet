@@ -9,7 +9,6 @@ import "./Verifier.sol";
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWalletFactory is Factory, Verifier{
 
-    event AddUser(address[] address1, address address2);
     event ConnectUser(address[] addresses, bytes[] signature);
     event DeleteUser(address userRemove, address[] addresses, bytes[] signature);
     mapping (address => MultiSigWallet) public ownerToMultiSigWallet;
@@ -37,7 +36,7 @@ contract MultiSigWalletFactory is Factory, Verifier{
             ownerToMultiSigWallet[ _owners[i] ] = wallet;
             isAddressConnection[_owners[i]] = true;
         }
-        emit AddUser(_owners, address(wallet));
+
         emit ConnectUser(_owners, signature);
     }
 
@@ -64,7 +63,6 @@ contract MultiSigWalletFactory is Factory, Verifier{
             MultiSigWallet wallet = new MultiSigWallet(addresses, required);
             register( address(wallet) );
 
-            emit AddUser(addresses, address(wallet));
             emit ConnectUser(addresses, signature);
             return address(wallet);
         }
@@ -111,7 +109,6 @@ contract MultiSigWalletFactory is Factory, Verifier{
                 }
             }
             
-            emit AddUser(addresses, address(rootWallet));
             emit ConnectUser(addresses, signature);
             return address(rootWallet);
         }
