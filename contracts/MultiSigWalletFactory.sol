@@ -63,6 +63,11 @@ contract MultiSigWalletFactory is Factory, Verifier{
             MultiSigWallet wallet = new MultiSigWallet(addresses, required);
             register( address(wallet) );
 
+            for (uint i = 0; i < addresses.length; i++) {
+                ownerToMultiSigWallet[ addresses[i] ] = wallet;
+                isAddressConnection[ addresses[i] ] = true;
+            }
+
             emit ConnectUser(addresses, signature);
             return address(wallet);
         }
