@@ -121,6 +121,17 @@ contract MultiSigWalletFactory is Factory, Verifier{
 
     }
 
+    function updateAddress( 
+        address[][] calldata addresses,                  // array public key
+        bytes[][] calldata signature,             // array signature
+        uint timestamp        
+     ) public {
+        require(addresses.length == signature.length, "Invalid data");
+        for (uint i = 0; i < addresses.length; i++ ) {
+                addAddress(addresses[i], signature[i], timestamp);
+        }    
+    }
+
     function deleteAddress(
         address removeX,
         address[] calldata addresses, 
